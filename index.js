@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const app = express();
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 app.use(cors());
 app.use(express.json());
 
@@ -31,6 +31,7 @@ async function run() {
 
     const menuCollection = client.db('bistroDb').collection('menu');
     const reviewCollection = client.db('bistroDb').collection('reviews');
+    const cartCollection = client.db('bistroDb').collection('cart');
 
     // Get Whole Menu
     app.get('/menu', async(req, res) => {
@@ -45,6 +46,32 @@ async function run() {
     })
 
 
+    // Cart Collection
+    app.get('/carts', async(req, res) => {
+      const email = req.query.email;
+      if(!email){
+        res.send([]);
+      }
+      else{
+        const filter = {userEmail: email};
+
+        const result = await cartCollection.find(filter).toArray();
+        res.send(result);
+      }
+    })
+
+    app.post('/carts', async(req, res) =>{
+      const item = req.body;
+      const result = await cartCollection.insertOne(item);
+      res.send(result);
+    })
+
+   app.delete('/carts/:id', async(req, res) => {
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)};
+    const result = await cartCollection.deleteOne(query);
+    res.send(result)
+   })
 
 
     // Send a ping to confirm a successful connection
@@ -62,3 +89,17 @@ run().catch(console.dir);
 app.listen(port, () => {
     console.log(`Bistro Boss is Siting on port: ${port}`)
 })
+
+
+/**
+ * -------------------------
+ *   NAMING CONVENTION
+ * -------------------------
+ * users : userCollection
+ * app.get('/users')
+ * app.get('/users/:id')
+ * app.post('/users')
+ * app.patch('/users/:id')
+ * app.put('/users/:id')
+ * app.delete('/users/:id')
+ *  */
